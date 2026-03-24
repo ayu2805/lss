@@ -34,6 +34,7 @@ pipewire
 pipewire-alsa
 pipewire-pulseaudio
 power-profiles-daemon
+qt6-qtbase
 ufw
 unrar
 unzip
