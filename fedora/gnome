@@ -3,7 +3,6 @@ decibels
 file-roller
 gnome-backgrounds
 gnome-calculator
-gnome-console
 gnome-disk-utility
 gnome-keyring
 gnome-packagekit-common
@@ -17,4 +16,5 @@ gvfs-smb
 loupe
 nautilus
 papirus-icon-theme
+ptyxis
 showtime
