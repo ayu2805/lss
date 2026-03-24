@@ -6,7 +6,7 @@ gnome-calculator
 gnome-console
 gnome-disk-utility
 gnome-keyring
-gnome-packagekit
+gnome-packagekit-common
 gnome-shell
 gnome-software
 gnome-system-monitor
