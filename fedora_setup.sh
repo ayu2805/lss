@@ -198,8 +198,8 @@ logout-prompt=false
 EOF
     sudo dconf update
     
-    xdg-mime default org.gnome.Nautilus.desktop inode/directory
-    xdg-mime default org.gnome.TextEditor.desktop application/json
+    # xdg-mime default org.gnome.Nautilus.desktop inode/directory
+    # xdg-mime default org.gnome.TextEditor.desktop application/json
     
 }
 
