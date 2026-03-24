@@ -84,6 +84,7 @@ configure_system() {
 
     flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 
+    echo -e "PAGER=more" | sudo tee /etc/environment > /dev/null
     mkdir -p "/home/$(whoami)/.config/Code/User/"
     curl -Ss https://gist.githubusercontent.com/ayu2805/7bae58a7e279199552f77e3ae577bd6c/raw/settings.json | \
         tee "/home/$(whoami)/.config/Code/User/settings.json" > /dev/null
@@ -271,10 +272,6 @@ configure_post_de() {
         sudo sed -i 's/^#AutoEnable.*/AutoEnable=false/' /etc/bluetooth/main.conf
         sudo sed -i 's/^AutoEnable.*/AutoEnable=false/' /etc/bluetooth/main.conf
         sudo systemctl enable bluetooth
-    fi
-
-    if dnf list --installed gtk4 &>/dev/null; then
-        echo "GSK_RENDERER=ngl" | sudo tee -a /etc/environment > /dev/null
     fi
     
     cat << EOF | sudo tee /etc/nanorc > /dev/null
