@@ -162,7 +162,7 @@ setup_gnome() {
     gsettings set org.gnome.desktop.wm.preferences button-layout ":minimize,maximize,close"
     gsettings set org.gnome.nautilus.icon-view default-zoom-level 'small-plus' 
     gsettings set org.gnome.SessionManager logout-prompt false
-    gsettings set org.gnome.shell favorite-apps "['org.mozilla.firefox.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Software.desktop', 'org.gnome.Console.desktop', 'code.desktop']"
+    gsettings set org.gnome.shell favorite-apps "['org.mozilla.firefox.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Software.desktop', 'org.gnome.Ptyxis.desktop', 'code.desktop']"
     gsettings set org.gnome.shell.keybindings show-screenshot-ui "['Print', '<Shift><Super>S']"
     gsettings set org.gnome.TextEditor discover-settings false
     gsettings set org.gnome.TextEditor highlight-current-line true
