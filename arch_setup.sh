@@ -304,11 +304,11 @@ setup_kde() {
         tee ~/.config/kactivitymanagerd-pluginsrc > /dev/null
 
     local touchpad_id
-    touchpad_id=$(grep 'Name=.*Touchpad' /proc/bus/input/devices | awk -F'"' '{print $2}')
+    touchpad_id=$(sudo libinput list-devices | sed -n '/Device:/h; /Touchpad/{g; s/.*Device:[[:space:]]*\(.*\).*/\1/; p}')
     if [ -n "$touchpad_id" ]; then
         local vendor_id product_id vendor_id_dec product_id_dec
-        vendor_id=$(echo "$touchpad_id" | awk '{print substr($2, 1, 4)}')
-        product_id=$(echo "$touchpad_id" | awk '{print substr($2, 6, 4)}')
+        vendor_id=$(sudo libinput list-devices | sed -n '/Id:/h; /Touchpad/{g; s/.*\([0-9a-fA-F]\{4\}\):[0-9a-fA-F]\{4\}.*/\1/; p}')
+        product_id=$(sudo libinput list-devices | sed -n '/Id:/h; /Touchpad/{g; s/.*[0-9a-fA-F]\{4\}:\([0-9a-fA-F]\{4\}\).*/\1/; p}')
         vendor_id_dec=$(printf "%d" "0x$vendor_id")
         product_id_dec=$(printf "%d" "0x$product_id")
         echo -e "\n[Libinput][$vendor_id_dec][$product_id_dec][$touchpad_id]\nNaturalScroll=true" | \
