@@ -298,8 +298,7 @@ setup_kde() {
         tee ~/.config/kwinrc > /dev/null
     echo -e "[General]\nShowWelcomeScreenOnStartup=false" | tee ~/.config/arkrc > /dev/null
     echo -e "[General]\nShow welcome view for new window=false" | tee ~/.config/katerc ~/.config/kwriterc > /dev/null
-    echo -e "[PlasmaViews][Panel 2]\nfloating=0\npanelOpacity=1\n\n[PlasmaViews][Panel 2][Defaults]\nthickness=42" | \
-        tee ~/.config/plasmashellrc > /dev/null
+    echo -e "[PlasmaViews][Panel 2]\nfloating=0" | tee ~/.config/plasmashellrc > /dev/null
     echo -e "[Plugin-org.kde.ActivityManager.Resources.Scoring]\nwhat-to-remember=2" | \
         tee ~/.config/kactivitymanagerd-pluginsrc > /dev/null
 
