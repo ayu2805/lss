@@ -5,6 +5,7 @@ code
 devtools
 dosfstools
 exfatprogs
+ffmpeg
 firefox
 firefox-ublock-origin
 flatpak
