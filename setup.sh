@@ -6,17 +6,12 @@
 set -e
 set -u
 
-# Detect OS
 if [ -f /etc/os-release ]; then
     . /etc/os-release
 else
     echo "Error: /etc/os-release not found. Cannot determine OS."
     exit 1
 fi
-
-#######################################
-# Common Utility Functions
-#######################################
 
 prompt_yes_no() {
     local prompt="$1"
@@ -44,6 +39,121 @@ setup_user_info() {
     fi
 }
 
+install_nvidia_drivers() {
+    echo ""
+    if prompt_yes_no "Do you want to install NVIDIA open source drivers?"; then
+        if [ "$NAME" = "Arch Linux" ]; then
+            sudo pacman -S --needed --noconfirm --disable-download-timeout \
+                nvidia-open-dkms nvidia-prime opencl-nvidia switcheroo-control
+            sudo systemctl enable nvidia-persistenced switcheroo-control
+
+            echo ""
+            if prompt_yes_no "Do you want to enable NVIDIA's Dynamic Boost(Ampere+)?"; then
+                sudo systemctl enable nvidia-powerd
+            fi
+        elif [ "$NAME" = "Fedora Linux" ]; then
+            sudo dnf install -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm \
+                https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+            sudo dnf upgrade -y
+            sudo dnf install -y akmod-nvidia xorg-x11-drv-nvidia-cuda switcheroo-control
+        fi
+    fi
+}
+
+install_common_packages() {
+    echo ""
+    if [ "$NAME" = "Arch Linux" ]; then
+        sudo pacman -S --needed --noconfirm --disable-download-timeout - < arch/common
+        sudo sed -i '/^hosts: mymachines/ { /mdns_minimal/! s/^hosts: mymachines/& mdns_minimal [NOTFOUND=return]/; }' /etc/nsswitch.conf
+        sudo systemctl mask systemd-resolved
+        sudo systemctl enable avahi-daemon cups.socket power-profiles-daemon sshd ufw
+        sudo systemctl start ufw
+    elif [ "$NAME" = "Fedora Linux" ]; then
+        sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+        cat << EOF | sudo tee /etc/yum.repos.d/vscode.repo > /dev/null
+[code]
+name=Visual Studio Code
+baseurl=https://packages.microsoft.com/yumrepos/vscode
+enabled=1
+autorefresh=1
+type=rpm-md
+gpgcheck=1
+gpgkey=https://packages.microsoft.com/keys/microsoft.asc
+EOF
+        sudo dnf upgrade -y
+        sudo dnf install -y $(cat fedora/common)
+    fi
+}
+
+configure_system() {
+    local shell_rc
+    local vscode_config_dir
+
+    if [ "$NAME" = "Arch Linux" ]; then
+        shell_rc="/etc/bash.bashrc"
+        vscode_config_dir="Code - OSS"
+        sudo cp /usr/share/doc/avahi/ssh.service /etc/avahi/services/
+
+        sudo sed -i "s/^PKGEXT.*/PKGEXT='.pkg.tar'/" /etc/makepkg.conf
+        sudo sed -i 's/^#MAKEFLAGS.*/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
+        sudo sed -i 's/^MAKEFLAGS.*/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
+
+        sudo mkdir -p /etc/pacman.d/hooks/
+        cat << EOF | sudo tee /etc/pacman.d/hooks/gutenprint.hook > /dev/null
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Type = Package
+Target = gutenprint
+
+[Action]
+Depends = gutenprint
+When = PostTransaction
+Exec = /usr/bin/cups-genppdupdate
+EOF
+    elif [ "$NAME" = "Fedora Linux" ]; then
+        shell_rc="/home/$(whoami)/.bashrc"
+        vscode_config_dir="Code"
+
+        systemctl --user enable --now pipewire.socket
+        systemctl --user enable --now pipewire-pulse.socket
+        systemctl --user enable --now wireplumber
+
+        flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+    fi
+
+    sudo ufw enable
+    sudo ufw allow IPP
+    sudo ufw allow SSH
+    sudo ufw allow Bonjour
+
+    echo 'PS1="\[\e[32m\][\u@\h \W]\[\e[34m\]$\[\e[0m\] "' | sudo tee "$shell_rc" > /dev/null
+    echo -e "PAGER=more" | sudo tee /etc/environment > /dev/null
+
+    mkdir -p "/home/$(whoami)/.config/$vscode_config_dir/User/"
+    curl -Ss https://gist.githubusercontent.com/ayu2805/7bae58a7e279199552f77e3ae577bd6c/raw/settings.json | \
+        tee "/home/$(whoami)/.config/$vscode_config_dir/User/settings.json" > /dev/null
+    
+    echo ""
+    if prompt_yes_no "Do you want to setup Samba?"; then
+        if [ "$NAME" = "Arch Linux" ]; then
+            sudo pacman -S --needed --noconfirm --disable-download-timeout samba
+            echo -e "[global]\nserver string = Samba Server\n" | sudo tee /etc/samba/smb.conf > /dev/null
+        elif [ "$NAME" = "Fedora Linux" ]; then
+            sudo dnf install -y samba
+        fi
+
+        sudo smbpasswd -a "$(whoami)"
+        sudo ufw allow CIFS
+        echo -e "\n[Samba Share]\ncomment = Samba Share\npath = /home/$(whoami)/Samba Share\nread only = no" | \
+            sudo tee -a /etc/samba/smb.conf > /dev/null
+        rm -rf ~/Samba\ Share
+        mkdir ~/Samba\ Share
+        sudo systemctl enable smb
+    fi
+}
+
 setup_git() {
     echo ""
     if prompt_yes_no "Do you want to configure git?"; then
@@ -61,59 +171,57 @@ setup_git() {
     fi
 }
 
-select_desktop_environment() {
-    while true; do
-        echo -e "1) Gnome\n2) KDE"
-        read -r -p "Select Desktop Environment(or press enter to skip): " reply
-        case "$reply" in
-            "1")
-                setup_gnome
-                break
-                ;;
-            "2")
-                setup_kde
-                break
-                ;;
-            "")
-                break
-                ;;
-            *)
-                echo -e "\nInvalid choice. Please try again..."
-                ;;
-        esac
-    done
-}
+configure_gnome() {
+    echo ""
+    echo "Installing Gnome..."
+    echo ""
 
-#######################################
-# Common Desktop Configurations
-#######################################
+    local icon_theme
+    local favorite_apps
+    local folder_children
 
-configure_gnome_common() {
-    local icon_theme="$1"
-    local favorite_apps="$2"
-    local folder_children="$3"
+    if [ "$NAME" = "Arch Linux" ]; then        
+        sudo pacman -S --needed --noconfirm --disable-download-timeout - < arch/gnome
+        sudo systemctl enable gdm
+
+        xdg-mime default org.gnome.Nautilus.desktop inode/directory
+        xdg-mime default org.gnome.TextEditor.desktop application/json
+        
+        gsettings set org.gnome.Console ignore-scrollback-limit true
+        gsettings set org.gnome.Console restore-window-size false
+
+        icon_theme="Papirus-Dark"
+        favorite_apps="['firefox.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Console.desktop', 'code-oss.desktop']"
+        folder_children="['Office', 'System', 'Utilities']"
+    elif [ "$NAME" = "Fedora Linux" ]; then
+        sudo dnf install -y $(cat fedora/gnome)
+        sudo systemctl enable gdm.service
+        sudo systemctl set-default graphical.target
+        
+        gsettings set org.gnome.Ptyxis default-columns 100
+        gsettings set org.gnome.Ptyxis default-rows 30
+        gsettings set org.gnome.Ptyxis restore-window-size false
+        gsettings set org.gnome.Ptyxis restore-session false
+
+        icon_theme="Papirus"
+        favorite_apps="['org.mozilla.firefox.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Software.desktop', 'org.gnome.Ptyxis.desktop', 'code.desktop']"
+        folder_children="['System', 'Utilities']"
+    fi
 
     gsettings set org.gnome.desktop.app-folders folder-children "$folder_children"
     
-    # Configure App Folders
     if [[ "$folder_children" == *"Office"* ]]; then
         gsettings set org.gnome.desktop.app-folders.folder:/org/gnome/desktop/app-folders/folders/Office/ categories "['Office']"
         gsettings set org.gnome.desktop.app-folders.folder:/org/gnome/desktop/app-folders/folders/Office/ name 'Office'
         gsettings set org.gnome.desktop.app-folders.folder:/org/gnome/desktop/app-folders/folders/Office/ translate true
     fi
 
-    if [[ "$folder_children" == *"System"* ]]; then
-        gsettings set org.gnome.desktop.app-folders.folder:/org/gnome/desktop/app-folders/folders/System/ categories "['System']"
-        gsettings set org.gnome.desktop.app-folders.folder:/org/gnome/desktop/app-folders/folders/System/ name 'System'
-        gsettings set org.gnome.desktop.app-folders.folder:/org/gnome/desktop/app-folders/folders/System/ translate true
-    fi
-
-    if [[ "$folder_children" == *"Utilities"* ]]; then
-        gsettings set org.gnome.desktop.app-folders.folder:/org/gnome/desktop/app-folders/folders/Utilities/ categories "['AudioVideo', 'Development', 'Graphics',  'Network',  'Utility']"
-        gsettings set org.gnome.desktop.app-folders.folder:/org/gnome/desktop/app-folders/folders/Utilities/ name 'Utilities'
-        gsettings set org.gnome.desktop.app-folders.folder:/org/gnome/desktop/app-folders/folders/Utilities/ translate true
-    fi
-
+    gsettings set org.gnome.desktop.app-folders.folder:/org/gnome/desktop/app-folders/folders/System/ categories "['System']"
+    gsettings set org.gnome.desktop.app-folders.folder:/org/gnome/desktop/app-folders/folders/System/ name 'System'
+    gsettings set org.gnome.desktop.app-folders.folder:/org/gnome/desktop/app-folders/folders/System/ translate true
+    gsettings set org.gnome.desktop.app-folders.folder:/org/gnome/desktop/app-folders/folders/Utilities/ categories "['AudioVideo', 'Development', 'Graphics',  'Network',  'Utility']"
+    gsettings set org.gnome.desktop.app-folders.folder:/org/gnome/desktop/app-folders/folders/Utilities/ name 'Utilities'
+    gsettings set org.gnome.desktop.app-folders.folder:/org/gnome/desktop/app-folders/folders/Utilities/ translate true
     gsettings set org.gnome.desktop.a11y always-show-universal-access-status true
     gsettings set org.gnome.desktop.datetime automatic-timezone true
     gsettings set org.gnome.desktop.interface clock-format '24h'
@@ -154,6 +262,7 @@ configure_gnome_common() {
     cat << EOF | sudo tee /etc/dconf/db/gdm.d/gdm-config > /dev/null
 [org/gnome/desktop/interface]
 color-scheme='prefer-dark'
+$( [ "$NAME" = "Arch Linux" ] && echo "font-name='Adwaita Sans 12'" )
 icon-theme='$icon_theme'
 show-battery-percentage=true
 
@@ -170,7 +279,20 @@ EOF
     sudo dconf update
 }
 
-configure_kde_common() {
+configure_kde() {
+    echo ""
+    echo "Installing KDE..."
+    echo ""
+
+    if [ "$NAME" = "Arch Linux" ]; then
+        sudo pacman -S --needed --noconfirm --disable-download-timeout - < arch/kde
+        sudo systemctl enable plasmalogin
+    elif [ "$NAME" = "Fedora Linux" ]; then
+        sudo dnf install -y $(cat fedora/kde)
+        sudo systemctl enable plasmalogin.service
+        sudo systemctl set-default graphical.target
+    fi
+
     sudo mkdir -p /var/lib/plasmalogin/.config/
     echo -e "[Keyboard]\nNumLock=0" | sudo tee /var/lib/plasmalogin/.config/kcminputrc > /dev/null
     echo -e "[Plugins]\nshakecursorEnabled=false" | sudo tee /var/lib/plasmalogin/.config/kwinrc > /dev/null
@@ -187,7 +309,8 @@ configure_kde_common() {
     echo -e "[Effect-overview]\nBorderActivate=9\n\n[Plugins]\nblurEnabled=false\ncontrastEnabled=true\nshakecursorEnabled=false" | \
         tee ~/.config/kwinrc > /dev/null
     echo -e "[General]\nShowWelcomeScreenOnStartup=false" | tee ~/.config/arkrc > /dev/null
-    echo -e "[General]\nShow welcome view for new window=false" | tee ~/.config/kwriterc > /dev/null
+    echo -e "[General]\nShow welcome view for new window=false" | \
+        tee $( [ "$NAME" = "Arch Linux" ] && echo "$HOME/.config/katerc" ) ~/.config/kwriterc > /dev/null
     echo -e "[PlasmaViews][Panel 2]\nfloating=0" | tee ~/.config/plasmashellrc > /dev/null
     echo -e "[Plugin-org.kde.ActivityManager.Resources.Scoring]\nwhat-to-remember=2" | \
         tee ~/.config/kactivitymanagerd-pluginsrc > /dev/null
@@ -205,17 +328,30 @@ configure_kde_common() {
     fi
 }
 
-configure_samba_common() {
-    sudo smbpasswd -a "$(whoami)"
-    sudo ufw allow CIFS
-    echo -e "[Samba Share]\ncomment = Samba Share\npath = /home/$(whoami)/Samba Share\nread only = no" | \
-        sudo tee -a /etc/samba/smb.conf > /dev/null
-    rm -rf ~/Samba\ Share
-    mkdir ~/Samba\ Share
-    sudo systemctl enable smb
+select_desktop_environment() {
+    while true; do
+        echo -e "1) Gnome\n2) KDE"
+        read -r -p "Select Desktop Environment(or press enter to skip): " reply
+        case "$reply" in
+            "1")
+                configure_gnome
+                break
+                ;;
+            "2")
+                configure_kde
+                break
+                ;;
+            "")
+                break
+                ;;
+            *)
+                echo -e "\nInvalid choice. Please try again..."
+                ;;
+        esac
+    done
 }
 
-configure_post_de_common() {
+configure_post_de() {
     local check_bluez_cmd="$1"
     
     echo ""
@@ -249,23 +385,6 @@ shortcuts=file:, file:///home/$(whoami), file:///home/$(whoami)/Desktop, file://
 sidebarWidth=110
 viewMode=Detail
 EOF
-}
-
-configure_system_common() {
-    local shell_rc="$1"
-    local vscode_config_dir="$2"
-
-    sudo ufw enable
-    sudo ufw allow IPP
-    sudo ufw allow SSH
-    sudo ufw allow Bonjour
-
-    echo 'PS1="\[\e[32m\][\u@\h \W]\[\e[34m\]$\[\e[0m\] "' | sudo tee "$shell_rc" > /dev/null
-    echo -e "PAGER=more" | sudo tee /etc/environment > /dev/null
-
-    mkdir -p "/home/$(whoami)/.config/$vscode_config_dir/User/"
-    curl -Ss https://gist.githubusercontent.com/ayu2805/7bae58a7e279199552f77e3ae577bd6c/raw/settings.json | \
-        tee "/home/$(whoami)/.config/$vscode_config_dir/User/settings.json" > /dev/null
 }
 
 case "$NAME" in
@@ -307,20 +426,6 @@ case "$NAME" in
             esac
         }
 
-        install_nvidia_drivers() {
-            echo ""
-            if prompt_yes_no "Do you want to install NVIDIA open source drivers(Turing+)?"; then
-                sudo pacman -S --needed --noconfirm --disable-download-timeout \
-                    nvidia-open-dkms nvidia-prime opencl-nvidia switcheroo-control
-                sudo systemctl enable nvidia-persistenced switcheroo-control
-
-                echo ""
-                if prompt_yes_no "Do you want to enable NVIDIA's Dynamic Boost(Ampere+)?"; then
-                    sudo systemctl enable nvidia-powerd
-                fi
-            fi
-        }
-
         setup_swap() {
             if [ -z "$(swapon --show)" ]; then
                 echo ""
@@ -346,82 +451,6 @@ case "$NAME" in
                     fi
                 fi
             fi
-        }
-
-        install_common_packages() {
-            echo ""
-            sudo pacman -S --needed --noconfirm --disable-download-timeout - < arch/common
-            sudo sed -i '/^hosts: mymachines/ { /mdns_minimal/! s/^hosts: mymachines/& mdns_minimal [NOTFOUND=return]/; }' /etc/nsswitch.conf
-            sudo systemctl mask systemd-resolved
-            sudo systemctl enable avahi-daemon cups.socket power-profiles-daemon sshd ufw
-            sudo systemctl start ufw
-        }
-
-        configure_system() {
-            configure_system_common "/etc/bash.bashrc" "Code - OSS"
-            sudo cp /usr/share/doc/avahi/ssh.service /etc/avahi/services/
-
-            sudo sed -i "s/^PKGEXT.*/PKGEXT='.pkg.tar'/" /etc/makepkg.conf
-            sudo sed -i 's/^#MAKEFLAGS.*/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
-            sudo sed -i 's/^MAKEFLAGS.*/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
-
-            sudo mkdir -p /etc/pacman.d/hooks/
-            cat << EOF | sudo tee /etc/pacman.d/hooks/gutenprint.hook > /dev/null
-[Trigger]
-Operation = Install
-Operation = Upgrade
-Operation = Remove
-Type = Package
-Target = gutenprint
-
-[Action]
-Depends = gutenprint
-When = PostTransaction
-Exec = /usr/bin/cups-genppdupdate
-EOF
-        }
-
-        setup_samba() {
-            echo ""
-            if prompt_yes_no "Do you want to setup Samba?"; then
-                sudo pacman -S --needed --noconfirm --disable-download-timeout samba
-                echo -e "[global]\nserver string = Samba Server\n" | sudo tee /etc/samba/smb.conf > /dev/null
-                configure_samba_common
-            fi
-        }
-
-        setup_gnome() {
-            echo ""
-            echo "Installing Gnome..."
-            echo ""
-            
-            sudo pacman -S --needed --noconfirm --disable-download-timeout - < arch/gnome
-            sudo systemctl enable gdm
-            
-            gsettings set org.gnome.Console ignore-scrollback-limit true
-            gsettings set org.gnome.Console restore-window-size false
-
-            configure_gnome_common "Papirus-Dark" \
-                "['firefox.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Console.desktop', 'code-oss.desktop']" \
-                "['Office', 'System', 'Utilities']"
-            
-            xdg-mime default org.gnome.Nautilus.desktop inode/directory
-            xdg-mime default org.gnome.TextEditor.desktop application/json
-        }
-
-        setup_kde() {
-            echo ""
-            echo "Installing KDE..."
-            echo ""
-            
-            sudo pacman -S --needed --noconfirm --disable-download-timeout - < arch/kde
-            sudo systemctl enable plasmalogin
-
-            configure_kde_common
-        }
-
-        configure_post_de() {
-            configure_post_de_common "pacman -Qi bluez"
         }
 
         setup_chaotic_aur() {
@@ -463,13 +492,6 @@ EOF
             fi
         }
 
-        cleanup() {
-            rm -f ~/.bash*
-            echo ""
-            echo "You can now reboot your system"
-        }
-
-        # Execution
         check_root
         setup_user_info
         setup_pacman
@@ -479,13 +501,11 @@ EOF
         setup_swap
         install_common_packages
         configure_system
-        setup_samba
         setup_git
         select_desktop_environment
-        configure_post_de
+        configure_post_de "pacman -Qi bluez"
         setup_chaotic_aur
         setup_blackarch
-        cleanup
         ;;
 
     "Fedora Linux")
@@ -495,95 +515,15 @@ EOF
             echo -e "[main]\ninstall_weak_deps = false\ndefaultyes = true" | sudo tee /etc/dnf/dnf.conf > /dev/null
         }
 
-        install_nvidia_drivers() {
-            echo ""
-            if prompt_yes_no "Do you want to install NVIDIA open source drivers?"; then
-                sudo dnf install -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
-                sudo dnf upgrade -y
-                sudo dnf install -y akmod-nvidia xorg-x11-drv-nvidia-cuda switcheroo-control
-            fi
-        }
-
-        install_common_packages() {
-            echo ""
-            sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-            cat << EOF | sudo tee /etc/yum.repos.d/vscode.repo > /dev/null
-[code]
-name=Visual Studio Code
-baseurl=https://packages.microsoft.com/yumrepos/vscode
-enabled=1
-autorefresh=1
-type=rpm-md
-gpgcheck=1
-gpgkey=https://packages.microsoft.com/keys/microsoft.asc
-EOF
-            sudo dnf upgrade -y
-            sudo dnf install -y $(cat fedora/common)
-        }
-
-        configure_system() {
-            configure_system_common "/home/$(whoami)/.bashrc" "Code"
-
-            systemctl --user enable --now pipewire.socket
-            systemctl --user enable --now pipewire-pulse.socket
-            systemctl --user enable --now wireplumber
-
-            flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-        }
-
-        setup_samba() {
-            echo ""
-            if prompt_yes_no "Do you want to setup Samba?"; then
-                sudo dnf install -y samba
-                configure_samba_common
-            fi
-        }
-
-        setup_gnome() {
-            echo ""
-            echo "Installing Gnome..."
-            echo ""
-            
-            sudo dnf install -y $(cat fedora/gnome)
-            sudo systemctl set-default graphical.target
-            
-            gsettings set org.gnome.Ptyxis default-columns 100
-            gsettings set org.gnome.Ptyxis default-rows 30
-            gsettings set org.gnome.Ptyxis restore-window-size false
-            gsettings set org.gnome.Ptyxis restore-session false
-
-            configure_gnome_common "Papirus" \
-                "['org.mozilla.firefox.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Software.desktop', 'org.gnome.Ptyxis.desktop', 'code.desktop']" \
-                "['System', 'Utilities']"
-        }
-
-        setup_kde() {
-            echo ""
-            echo "Installing KDE..."
-            echo ""
-            
-            sudo dnf install -y $(cat fedora/kde)
-            sudo systemctl enable plasmalogin.service
-            sudo systemctl set-default graphical.target
-
-            configure_kde_common
-        }
-
-        configure_post_de() {
-            configure_post_de_common "dnf list --installed bluez"
-        }
-
-        # Execution
         check_root
         setup_user_info
         setup_dnf
         install_nvidia_drivers
         install_common_packages
         configure_system
-        setup_samba
         setup_git
         select_desktop_environment
-        configure_post_de
+        configure_post_de "dnf list --installed bluez"
         echo ""
         echo "You can now reboot your system"
         ;;
