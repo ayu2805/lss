@@ -204,7 +204,7 @@ configure_gnome() {
         gsettings set org.gnome.Ptyxis restore-session false
 
         icon_theme="Papirus"
-        favorite_apps="['org.mozilla.firefox.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Software.desktop', 'org.gnome.Ptyxis.desktop', 'code.desktop']"
+        favorite_apps="['org.mozilla.firefox.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Ptyxis.desktop', 'code.desktop']"
         folder_children="['System', 'Utilities']"
     fi
 
