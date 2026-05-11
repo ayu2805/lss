@@ -243,6 +243,7 @@ configure_gnome() {
     gsettings set org.gnome.desktop.sound event-sounds false
     gsettings set org.gnome.desktop.wm.preferences button-layout ":minimize,maximize,close"
     gsettings set org.gnome.nautilus.icon-view default-zoom-level 'small-plus' 
+    gsettings set org.gnome.settings-daemon.plugins.power power-button-action 'nothing'
     gsettings set org.gnome.SessionManager logout-prompt false
     gsettings set org.gnome.shell favorite-apps "$favorite_apps"
     gsettings set org.gnome.shell.keybindings show-screenshot-ui "['Print', '<Shift><Super>S']"
