@@ -176,7 +176,6 @@ configure_gnome() {
     echo "Installing Gnome..."
     echo ""
 
-    local icon_theme
     local favorite_apps
     local folder_children
 
