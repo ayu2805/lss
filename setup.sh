@@ -180,17 +180,13 @@ configure_gnome() {
     local favorite_apps
     local folder_children
 
-    if [ "$NAME" = "Arch Linux" ]; then        
+    if [ "$NAME" = "Arch Linux" ]; then
         sudo pacman -S --needed --noconfirm --disable-download-timeout - < arch/gnome
         sudo systemctl enable gdm
-
-        xdg-mime default org.gnome.Nautilus.desktop inode/directory
-        xdg-mime default org.gnome.TextEditor.desktop application/json
         
         gsettings set org.gnome.Console ignore-scrollback-limit true
         gsettings set org.gnome.Console restore-window-size false
 
-        icon_theme="Papirus-Dark"
         favorite_apps="['firefox.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Console.desktop', 'code-oss.desktop']"
         folder_children="['Office', 'System', 'Utilities']"
     elif [ "$NAME" = "Fedora Linux" ]; then
@@ -203,7 +199,6 @@ configure_gnome() {
         gsettings set org.gnome.Ptyxis restore-window-size false
         gsettings set org.gnome.Ptyxis restore-session false
 
-        icon_theme="Papirus"
         favorite_apps="['org.mozilla.firefox.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Ptyxis.desktop', 'code.desktop']"
         folder_children="['System', 'Utilities']"
     fi
@@ -228,7 +223,7 @@ configure_gnome() {
     gsettings set org.gnome.desktop.interface clock-show-weekday true
     gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
     gsettings set org.gnome.desktop.interface gtk-theme 'adw-gtk3-dark'
-    gsettings set org.gnome.desktop.interface icon-theme "$icon_theme"
+    gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark'
     gsettings set org.gnome.desktop.interface show-battery-percentage true
     gsettings set org.gnome.desktop.notifications show-in-lock-screen false
     gsettings set org.gnome.desktop.peripherals.keyboard numlock-state true
