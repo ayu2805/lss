@@ -258,7 +258,7 @@ configure_gnome() {
 [org/gnome/desktop/interface]
 color-scheme='prefer-dark'
 $( [ "$NAME" = "Arch Linux" ] && echo "font-name='Adwaita Sans 12'" )
-icon-theme='$icon_theme'
+icon-theme='Papirus-Dark'
 show-battery-percentage=true
 
 [org/gnome/desktop/peripherals/keyboard]
