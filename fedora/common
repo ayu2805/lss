@@ -35,6 +35,7 @@ pipewire
 pipewire-alsa
 pipewire-pulseaudio
 power-profiles-daemon
+rpmdevtools
 ufw
 unrar
 unzip
