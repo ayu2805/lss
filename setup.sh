@@ -348,6 +348,7 @@ select_desktop_environment() {
 
 configure_post_de() {
     local check_bluez_cmd="$1"
+    local check_gtk4_cmd="$2"
     
     echo ""
     if eval "$check_bluez_cmd" &>/dev/null; then
@@ -355,11 +356,9 @@ configure_post_de() {
         sudo sed -i 's/^AutoEnable.*/AutoEnable=false/' /etc/bluetooth/main.conf
         sudo systemctl enable bluetooth
     fi
-    
-    if [ "$NAME" = "Arch Linux" ]; then
-        if pacman -Qi gtk4 &>/dev/null; then
-            echo "GSK_RENDERER=gl" | sudo tee -a /etc/environment > /dev/null
-        fi
+
+    if eval "$check_gtk4_cmd" &>/dev/null; then
+        echo "GSK_RENDERER=gl" | sudo tee -a /etc/environment > /dev/null
     fi
 
     cat << EOF | sudo tee /etc/nanorc > /dev/null
@@ -498,7 +497,7 @@ case "$NAME" in
         configure_system
         setup_git
         select_desktop_environment
-        configure_post_de "pacman -Qi bluez"
+        configure_post_de "pacman -Qi bluez" "pacman -Qi gtk4"
         setup_chaotic_aur
         setup_blackarch
         ;;
@@ -518,7 +517,7 @@ case "$NAME" in
         configure_system
         setup_git
         select_desktop_environment
-        configure_post_de "dnf list --installed bluez"
+        configure_post_de "dnf list --installed bluez" "dnf list --installed gtk4"
         echo ""
         echo "You can now reboot your system"
         ;;
