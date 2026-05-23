@@ -48,7 +48,7 @@ install_nvidia_drivers() {
         elif [ "$NAME" = "Fedora Linux" ]; then
             sudo dnf install -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
             sudo dnf upgrade -y
-            sudo dnf install -y akmod-nvidia switcheroo-control
+            sudo dnf install -y akmod-nvidia switcheroo-control xorg-x11-drv-nvidia-cuda
         fi
     fi
 }
