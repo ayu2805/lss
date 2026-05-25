@@ -288,9 +288,21 @@ configure_kde() {
     fi
 }
 
+configure_hyprland() {
+    echo ""
+    echo "Installing Hyprland..."
+    echo ""
+
+    sudo pacman -S --needed --noconfirm --disable-download-timeout - < arch/hypr
+}
+
 select_desktop_environment() {
     while true; do
-        echo -e "1) Gnome\n2) KDE"
+        if [ "$NAME" = "Arch Linux" ]; then
+            echo -e "1) Gnome\n2) KDE\n3) Hyprland"
+        else
+            echo -e "1) Gnome\n2) KDE"
+        fi
         read -r -p "Select Desktop Environment(or press enter to skip): " reply
         case "$reply" in
             "1")
@@ -300,6 +312,14 @@ select_desktop_environment() {
             "2")
                 configure_kde
                 break
+                ;;
+            "3")
+                if [ "$NAME" = "Arch Linux" ]; then
+                    configure_hyprland
+                    break
+                else
+                    echo -e "\nInvalid choice. Please try again..."
+                fi
                 ;;
             "")
                 break
