@@ -6,4 +6,4 @@
 3. Run either `./arch_setup.sh` or `./fedora_setup.sh`, depending on your distribution
 
 > Note: If you want to setup git without running the script, run:\
-`bash -c "$(curl -Ss https://raw.githubusercontent.com/ayu2805/lss/main/git-config)"`
+`curl -sS https://raw.githubusercontent.com/ayu2805/lss/main/git-config | sh`
