@@ -109,7 +109,6 @@ EOF
         systemctl --user enable --now pipewire.socket
         systemctl --user enable --now pipewire-pulse.socket
         systemctl --user enable --now wireplumber
-        flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
     fi
 
     sudo ufw enable
