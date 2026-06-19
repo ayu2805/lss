@@ -59,8 +59,7 @@ install_common_packages() {
         sudo pacman -S --needed --noconfirm --disable-download-timeout - < arch/common
         sudo sed -i '/^hosts: mymachines/ { /mdns_minimal/! s/^hosts: mymachines/& mdns_minimal [NOTFOUND=return]/; }' /etc/nsswitch.conf
         sudo systemctl mask systemd-resolved
-        sudo systemctl enable avahi-daemon cups.socket power-profiles-daemon sshd ufw
-        sudo systemctl start ufw
+        sudo systemctl enable avahi-daemon cups.socket power-profiles-daemon sshd
     elif [ "$NAME" = "Fedora Linux" ]; then
         sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
         cat << EOF | sudo tee /etc/yum.repos.d/vscode.repo > /dev/null
@@ -111,6 +110,7 @@ EOF
         systemctl --user enable --now wireplumber
     fi
 
+    sudo systemctl enable --now ufw
     sudo ufw enable
     sudo ufw allow IPP
     sudo ufw allow SSH
