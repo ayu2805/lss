@@ -46,8 +46,6 @@ install_nvidia_drivers() {
             sudo pacman -S --needed --noconfirm --disable-download-timeout nvidia-open-dkms switcheroo-control
             sudo systemctl enable switcheroo-control
         elif [ "$NAME" = "Fedora Linux" ]; then
-            sudo dnf install -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
-            sudo dnf upgrade -y
             sudo dnf install -y akmod-nvidia switcheroo-control xorg-x11-drv-nvidia-cuda
         fi
     fi
@@ -105,16 +103,8 @@ EOF
     elif [ "$NAME" = "Fedora Linux" ]; then
         shell_rc="/home/$(whoami)/.bashrc"
         vscode_config_dir="Code"
-        systemctl --user enable --now pipewire.socket
-        systemctl --user enable --now pipewire-pulse.socket
-        systemctl --user enable --now wireplumber
+        systemctl --user enable --now pipewire.socket pipewire-pulse.socket wireplumber.service
     fi
-
-    sudo systemctl enable --now ufw
-    sudo ufw enable
-    sudo ufw allow IPP
-    sudo ufw allow SSH
-    sudo ufw allow Bonjour
 
     echo 'PS1="\[\e[32m\][\u@\h \W]\[\e[34m\]$\[\e[0m\] "' | sudo tee "$shell_rc" > /dev/null
     echo -e "PAGER=more" | sudo tee /etc/environment > /dev/null
@@ -131,7 +121,6 @@ EOF
         fi
 
         sudo smbpasswd -a "$(whoami)"
-        sudo ufw allow CIFS
         echo -e "\n[Samba Share]\ncomment = Samba Share\npath = /home/$(whoami)/Samba Share\nread only = no" | sudo tee -a /etc/samba/smb.conf > /dev/null
         rm -rf ~/Samba\ Share
         mkdir ~/Samba\ Share
@@ -467,7 +456,9 @@ case "$NAME" in
     "Fedora Linux")
         echo "Detected Fedora Linux. Starting setup..."
         setup_dnf() {
+            sudo dnf install -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
             echo -e "[main]\ninstall_weak_deps = false\ndefaultyes = true" | sudo tee /etc/dnf/dnf.conf > /dev/null
+            sudo dnf upgrade -y
         }
         check_root
         setup_user_info

@@ -7,6 +7,7 @@ dosfstools
 exfatprogs
 ffmpeg
 firefox
+firewall-config
 foomatic
 fprintd
 fwupd
@@ -36,7 +37,6 @@ pipewire-alsa
 pipewire-pulseaudio
 power-profiles-daemon
 rpmdevtools
-ufw
 unrar
 unzip
 upower

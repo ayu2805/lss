@@ -9,6 +9,7 @@ exfatprogs
 ffmpeg
 firefox
 firefox-ublock-origin
+firewall-config
 foomatic-db
 foomatic-db-engine
 foomatic-db-nonfree
@@ -33,7 +34,6 @@ python-dbus
 qt6-5compat
 qt6-base
 ttf-liberation
-ufw
 unrar
 unzip
 vulkan-mesa-layers
