@@ -44,9 +44,9 @@ install_nvidia_drivers() {
     if prompt_yes_no "Do you want to install NVIDIA open source drivers?"; then
         if [ "$NAME" = "Arch Linux" ]; then
             sudo pacman -S --needed --noconfirm --disable-download-timeout nvidia-open-dkms switcheroo-control
-            sudo systemctl enable switcheroo-control
+            sudo systemctl enable switcheroo-control nvidia-{suspend,resume,hibernate}
         elif [ "$NAME" = "Fedora Linux" ]; then
-            sudo dnf install -y akmod-nvidia switcheroo-control xorg-x11-drv-nvidia-cuda
+            sudo dnf install -y akmod-nvidia switcheroo-control xorg-x11-drv-nvidia-cuda xorg-x11-drv-nvidia-power
         fi
     fi
 }
