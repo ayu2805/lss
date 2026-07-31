@@ -60,7 +60,7 @@ install_common_packages() {
         sudo systemctl enable avahi-daemon cups.socket power-profiles-daemon sshd
     elif [ "$NAME" = "Fedora Linux" ]; then
         sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-        cat << EOF | sudo tee /etc/yum.repos.d/vscode.repo > /dev/null
+        sudo tee /etc/yum.repos.d/vscode.repo > /dev/null <<'EOF'
 [code]
 name=Visual Studio Code
 baseurl=https://packages.microsoft.com/yumrepos/vscode
@@ -87,7 +87,7 @@ configure_system() {
         sudo sed -i 's/^#MAKEFLAGS.*/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
         sudo sed -i 's/^MAKEFLAGS.*/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
         sudo mkdir -p /etc/pacman.d/hooks/
-        cat << EOF | sudo tee /etc/pacman.d/hooks/gutenprint.hook > /dev/null
+        sudo tee /etc/pacman.d/hooks/gutenprint.hook > /dev/null <<'EOF'
 [Trigger]
 Operation = Install
 Operation = Upgrade
@@ -110,22 +110,6 @@ EOF
     echo -e "PAGER=more" | sudo tee /etc/environment > /dev/null
     mkdir -p "/home/$(whoami)/.config/$vscode_config_dir/User/"
     curl -Ss https://gist.githubusercontent.com/ayu2805/7bae58a7e279199552f77e3ae577bd6c/raw/settings.json | tee "/home/$(whoami)/.config/$vscode_config_dir/User/settings.json" > /dev/null
-    
-    echo ""
-    if prompt_yes_no "Do you want to setup Samba?"; then
-        if [ "$NAME" = "Arch Linux" ]; then
-            sudo pacman -S --needed --noconfirm --disable-download-timeout samba
-            echo -e "[global]\nserver string = Samba Server\n" | sudo tee /etc/samba/smb.conf > /dev/null
-        elif [ "$NAME" = "Fedora Linux" ]; then
-            sudo dnf install -y samba
-        fi
-
-        sudo smbpasswd -a "$(whoami)"
-        echo -e "\n[Samba Share]\ncomment = Samba Share\npath = /home/$(whoami)/Samba Share\nread only = no" | sudo tee -a /etc/samba/smb.conf > /dev/null
-        rm -rf ~/Samba\ Share
-        mkdir ~/Samba\ Share
-        sudo systemctl enable smb
-    fi
 }
 
 setup_git() {
@@ -216,7 +200,7 @@ configure_gnome() {
     gsettings set org.gtk.Settings.FileChooser sort-directories-first true
     echo -e "user-db:user\nsystem-db:gdm\nfile-db:/usr/share/gdm/greeter-dconf-defaults" | sudo tee /etc/dconf/profile/gdm > /dev/null
     sudo mkdir -p /etc/dconf/db/gdm.d/
-    cat << EOF | sudo tee /etc/dconf/db/gdm.d/gdm-config > /dev/null
+    sudo tee /etc/dconf/db/gdm.d/gdm-config > /dev/null <<'EOF'
 [org/gnome/desktop/interface]
 color-scheme='prefer-dark'
 $( [ "$NAME" = "Arch Linux" ] && echo "font-name='Adwaita Sans 12'" )
@@ -331,7 +315,7 @@ configure_post_de() {
     if eval "$check_gtk4_cmd" &>/dev/null; then
         echo "GSK_RENDERER=gl" | sudo tee -a /etc/environment > /dev/null
     fi
-    cat << EOF | sudo tee /etc/nanorc > /dev/null
+    sudo tee /etc/nanorc > /dev/null <<'EOF'
 include "/usr/share/nano/*.nanorc"
 $( [ "$NAME" = "Arch Linux" ] && echo 'include "/usr/share/nano/extra/*.nanorc"' )
 
@@ -342,7 +326,7 @@ set stateflags
 set tabsize 4
 EOF
     mkdir -p ~/.config/
-    cat << EOF | tee ~/.config/QtProject.conf > /dev/null
+    sudo tee ~/.config/QtProject.conf > /dev/null <<'EOF'
 [FileDialog]
 shortcuts=file:, file:///home/$(whoami), file:///home/$(whoami)/Desktop, file:///home/$(whoami)/Documents, file:///home/$(whoami)/Downloads, file:///home/$(whoami)/Music, file:///home/$(whoami)/Pictures, file:///home/$(whoami)/Videos
 sidebarWidth=110
