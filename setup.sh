@@ -247,6 +247,7 @@ configure_kde() {
     echo -e "[General]\nShowWelcomeScreenOnStartup=false" | tee ~/.config/arkrc > /dev/null
     echo -e "[General]\nShow welcome view for new window=false" | tee $( [ "$NAME" = "Arch Linux" ] && echo "$HOME/.config/katerc" ) ~/.config/kwriterc > /dev/null
     echo -e "[PlasmaViews][Panel 2]\nfloating=0" | tee ~/.config/plasmashellrc > /dev/null
+    echo -e "[Event/exitkde]\nAction=\n\n[Event/startkde]\nAction=" | tee ~/.config/plasma_workspace.notifyrc > /dev/null
     echo -e "[Plugin-org.kde.ActivityManager.Resources.Scoring]\nwhat-to-remember=2" | tee ~/.config/kactivitymanagerd-pluginsrc > /dev/null
     local touchpad_id
     touchpad_id=$(sudo libinput list-devices | awk -F'Device:[[:space:]]*' '/Device:/{d=$2} /Touchpad/{print d}')
