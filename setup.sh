@@ -371,21 +371,23 @@ case "$NAME" in
             if [ -z "$(swapon --show)" ]; then
                 echo ""
                 if prompt_yes_no "Do you want to have swap space(swapfile with hibernate)?"; then
-                    local filesystem
+                    local filesystem ram_size swap_size
                     filesystem=$(df -T / | awk 'NR==2{print $2}')
+                    ram_size=$(free --giga | awk 'NR==2{print $2}')
+                    swap_size=$((ram_size * 2))
                     if [ "$filesystem" = "ext4" ]; then
-                        local ram_size swap_size
-                        ram_size=$(free --giga | awk 'NR==2{print $2}')
-                        swap_size=$((ram_size * 2))
-                        sudo mkswap -U clear --size "${swap_size}G" --file /swapfile
+                        sudo mkswap --size "${swap_size}G" --uuid clear --file /swapfile
                         sudo swapon /swapfile
-                        echo -e "[Swap]\nWhat=/swapfile\n\n[Install]\nWantedBy=swap.target" | sudo tee /etc/systemd/system/swapfile.swap > /dev/null
-                        sudo systemctl daemon-reload
-                        sudo systemctl enable swapfile.swap
+                        grep -qF "/swapfile none swap defaults 0 0" /etc/fstab || echo "/swapfile none swap defaults 0 0" | sudo tee -a /etc/fstab > /dev/null
                         sudo sed -i '/^HOOKS=/ { /resume/ !s/filesystems/filesystems resume/ }' /etc/mkinitcpio.conf
                         sudo mkinitcpio -P
+                    elif [ "$filesystem" = "btrfs" ]; then
+                        sudo btrfs filesystem mkswapfile --size "${swap_size}g" --uuid clear /swapfile
+                        grep -qF "/swapfile none swap defaults 0 0" /etc/fstab || echo "/swapfile none swap defaults 0 0" | sudo tee -a /etc/fstab > /dev/null
+                        echo 'add_dracutmodules+=" resume "' | sudo tee /etc/dracut.conf.d/resume.conf > /dev/null
+                        sudo dracut --regenerate-all --force
                     else
-                        echo "The filesystem type is not ext4. Skipping swap setup."
+                        echo "The filesystem type is not supported. Skipping swap setup."
                     fi
                 fi
             fi
