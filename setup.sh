@@ -86,7 +86,7 @@ install_common_packages() {
         sudo systemctl enable avahi-daemon cups.socket power-profiles-daemon sshd
     elif [ "$NAME" = "Fedora Linux" ]; then
         sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-        sudo tee /etc/yum.repos.d/vscode.repo > /dev/null <<'EOF'
+        sudo tee /etc/yum.repos.d/vscode.repo > /dev/null <<EOF
 [code]
 name=Visual Studio Code
 baseurl=https://packages.microsoft.com/yumrepos/vscode
@@ -113,7 +113,7 @@ configure_system() {
         sudo sed -i 's/^#MAKEFLAGS.*/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
         sudo sed -i 's/^MAKEFLAGS.*/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
         sudo mkdir -p /etc/pacman.d/hooks/
-        sudo tee /etc/pacman.d/hooks/gutenprint.hook > /dev/null <<'EOF'
+        sudo tee /etc/pacman.d/hooks/gutenprint.hook > /dev/null <<EOF
 [Trigger]
 Operation = Install
 Operation = Upgrade
@@ -226,7 +226,7 @@ configure_gnome() {
     gsettings set org.gtk.Settings.FileChooser sort-directories-first true
     echo -e "user-db:user\nsystem-db:gdm\nfile-db:/usr/share/gdm/greeter-dconf-defaults" | sudo tee /etc/dconf/profile/gdm > /dev/null
     sudo mkdir -p /etc/dconf/db/gdm.d/
-    sudo tee /etc/dconf/db/gdm.d/gdm-config > /dev/null <<'EOF'
+    sudo tee /etc/dconf/db/gdm.d/gdm-config > /dev/null <<EOF
 [org/gnome/desktop/interface]
 color-scheme='prefer-dark'
 $( [ "$NAME" = "Arch Linux" ] && echo "font-name='Adwaita Sans 12'" )
@@ -342,7 +342,7 @@ configure_post_de() {
     if eval "$check_gtk4_cmd" &>/dev/null; then
         echo "GSK_RENDERER=gl" | sudo tee -a /etc/environment > /dev/null
     fi
-    sudo tee /etc/nanorc > /dev/null <<'EOF'
+    sudo tee /etc/nanorc > /dev/null <<EOF
 include "/usr/share/nano/*.nanorc"
 $( [ "$NAME" = "Arch Linux" ] && echo 'include "/usr/share/nano/extra/*.nanorc"' )
 
@@ -353,7 +353,7 @@ set stateflags
 set tabsize 4
 EOF
     mkdir -p ~/.config/
-    sudo tee ~/.config/QtProject.conf > /dev/null <<'EOF'
+    sudo tee ~/.config/QtProject.conf > /dev/null <<EOF
 [FileDialog]
 shortcuts=file:, file:///home/$(whoami), file:///home/$(whoami)/Desktop, file:///home/$(whoami)/Documents, file:///home/$(whoami)/Downloads, file:///home/$(whoami)/Music, file:///home/$(whoami)/Pictures, file:///home/$(whoami)/Videos
 sidebarWidth=110
