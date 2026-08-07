@@ -42,11 +42,37 @@ setup_user_info() {
 install_nvidia_drivers() {
     echo ""
     if prompt_yes_no "Do you want to install NVIDIA open source drivers?"; then
-        if [ "$NAME" = "Arch Linux" ]; then
-            sudo pacman -S --needed --noconfirm --disable-download-timeout nvidia-open-dkms switcheroo-control
+        if [ "$NAME" = "Arch Linux" ] && pacman -Qi linux &>/dev/null; then
+            sudo pacman -S --needed --noconfirm --disable-download-timeout nvidia-open switcheroo-control
             sudo systemctl enable switcheroo-control nvidia-{suspend,resume,hibernate}
         elif [ "$NAME" = "Fedora Linux" ]; then
             sudo dnf install -y akmod-nvidia switcheroo-control xorg-x11-drv-nvidia-cuda xorg-x11-drv-nvidia-power
+        fi
+    fi
+}
+
+setup_swap() {
+    if [ -z "$(swapon --show)" ]; then
+        echo ""
+        if prompt_yes_no "Do you want to have swap space(swapfile with hibernate)?"; then
+            local filesystem ram_size swap_size
+            filesystem=$(df -T / | awk 'NR==2{print $2}')
+            ram_size=$(free --giga | awk 'NR==2{print $2}')
+            swap_size=$((ram_size * 2))
+            if [ "$filesystem" = "ext4" ]; then
+                sudo mkswap --size "${swap_size}G" --uuid clear --file /swapfile
+                sudo swapon /swapfile
+                grep -qF "/swapfile none swap defaults 0 0" /etc/fstab || echo "/swapfile none swap defaults 0 0" | sudo tee -a /etc/fstab > /dev/null
+                sudo sed -i '/^HOOKS=/ { /resume/ !s/filesystems/filesystems resume/ }' /etc/mkinitcpio.conf
+                sudo mkinitcpio -P
+            elif [ "$filesystem" = "btrfs" ]; then
+                sudo btrfs filesystem mkswapfile --size "${swap_size}g" --uuid clear /swapfile
+                grep -qF "/swapfile none swap defaults 0 0" /etc/fstab || echo "/swapfile none swap defaults 0 0" | sudo tee -a /etc/fstab > /dev/null
+                echo 'add_dracutmodules+=" resume "' | sudo tee /etc/dracut.conf.d/resume.conf > /dev/null
+                sudo dracut --regenerate-all --force
+            else
+                echo "The filesystem type is not supported. Skipping swap setup."
+            fi
         fi
     fi
 }
@@ -342,16 +368,6 @@ case "$NAME" in
             grep -qF "Include = /etc/pacman.d/custom" /etc/pacman.conf || echo "Include = /etc/pacman.d/custom" | sudo tee -a /etc/pacman.conf > /dev/null
             echo -e "[options]\nColor\nParallelDownloads = 5\nILoveCandy\n" | sudo tee /etc/pacman.d/custom > /dev/null
         }
-        update_system() {
-            echo ""
-            sudo pacman -Syu
-            kernels=("linux" "linux-zen" "linux-lts" "linux-hardened")
-            for kernel in "${kernels[@]}"; do
-                if pacman -Qi $kernel &>/dev/null; then
-                    sudo pacman -S --needed --noconfirm --disable-download-timeout ${kernel}-headers
-                fi
-            done
-        }
         install_cpu_drivers() {
             local cpu_vendor
             cpu_vendor=$(lscpu | grep "Vendor ID" | awk '{print $3}')
@@ -366,31 +382,6 @@ case "$NAME" in
                     echo "Unknown CPU vendor: $cpu_vendor"
                     ;;
             esac
-        }
-        setup_swap() {
-            if [ -z "$(swapon --show)" ]; then
-                echo ""
-                if prompt_yes_no "Do you want to have swap space(swapfile with hibernate)?"; then
-                    local filesystem ram_size swap_size
-                    filesystem=$(df -T / | awk 'NR==2{print $2}')
-                    ram_size=$(free --giga | awk 'NR==2{print $2}')
-                    swap_size=$((ram_size * 2))
-                    if [ "$filesystem" = "ext4" ]; then
-                        sudo mkswap --size "${swap_size}G" --uuid clear --file /swapfile
-                        sudo swapon /swapfile
-                        grep -qF "/swapfile none swap defaults 0 0" /etc/fstab || echo "/swapfile none swap defaults 0 0" | sudo tee -a /etc/fstab > /dev/null
-                        sudo sed -i '/^HOOKS=/ { /resume/ !s/filesystems/filesystems resume/ }' /etc/mkinitcpio.conf
-                        sudo mkinitcpio -P
-                    elif [ "$filesystem" = "btrfs" ]; then
-                        sudo btrfs filesystem mkswapfile --size "${swap_size}g" --uuid clear /swapfile
-                        grep -qF "/swapfile none swap defaults 0 0" /etc/fstab || echo "/swapfile none swap defaults 0 0" | sudo tee -a /etc/fstab > /dev/null
-                        echo 'add_dracutmodules+=" resume "' | sudo tee /etc/dracut.conf.d/resume.conf > /dev/null
-                        sudo dracut --regenerate-all --force
-                    else
-                        echo "The filesystem type is not supported. Skipping swap setup."
-                    fi
-                fi
-            fi
         }
         setup_chaotic_aur() {
             echo ""
@@ -427,7 +418,6 @@ case "$NAME" in
         check_root
         setup_user_info
         setup_pacman
-        update_system
         install_cpu_drivers
         install_nvidia_drivers
         setup_swap
@@ -451,6 +441,7 @@ case "$NAME" in
         setup_user_info
         setup_dnf
         install_nvidia_drivers
+        setup_swap
         install_common_packages
         configure_system
         setup_git
