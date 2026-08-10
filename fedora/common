@@ -25,7 +25,6 @@ llvm
 mesa-vulkan-drivers
 mozilla-ublock-origin
 NetworkManager-wifi
-nss-mdns
 pipewire
 pipewire-alsa
 pipewire-pulseaudio

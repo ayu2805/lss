@@ -52,7 +52,7 @@ install_nvidia_drivers() {
 }
 
 setup_swap() {
-    if [ -z "$(swapon --show)" ]; then
+    if [ ! -e /swapfile ]; then
         echo ""
         if prompt_yes_no "Do you want to have swap space(swapfile with hibernate)?"; then
             local filesystem ram_size swap_size
@@ -81,9 +81,7 @@ install_common_packages() {
     echo ""
     if [ "$NAME" = "Arch Linux" ]; then
         sudo pacman -S --needed --noconfirm --disable-download-timeout - < arch/common
-        sudo sed -i '/^hosts: mymachines/ { /mdns_minimal/! s/^hosts: mymachines/& mdns_minimal [NOTFOUND=return]/; }' /etc/nsswitch.conf
-        sudo systemctl mask systemd-resolved
-        sudo systemctl enable avahi-daemon cups.socket power-profiles-daemon sshd
+        sudo systemctl enable systemd-resolved cups.socket power-profiles-daemon sshd
     elif [ "$NAME" = "Fedora Linux" ]; then
         sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
         sudo tee /etc/yum.repos.d/vscode.repo > /dev/null <<EOF
@@ -342,6 +340,9 @@ configure_post_de() {
     if eval "$check_gtk4_cmd" &>/dev/null; then
         echo "GSK_RENDERER=gl" | sudo tee -a /etc/environment > /dev/null
     fi
+
+    sudo systemctl mask avahi-daemon.service avahi-daemon.socket
+
     sudo tee /etc/nanorc > /dev/null <<EOF
 include "/usr/share/nano/*.nanorc"
 $( [ "$NAME" = "Arch Linux" ] && echo 'include "/usr/share/nano/extra/*.nanorc"' )
@@ -352,6 +353,7 @@ set minibar
 set stateflags
 set tabsize 4
 EOF
+
     mkdir -p ~/.config/
     sudo tee ~/.config/QtProject.conf > /dev/null <<EOF
 [FileDialog]
