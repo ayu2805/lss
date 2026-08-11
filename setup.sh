@@ -81,7 +81,7 @@ install_common_packages() {
     echo ""
     if [ "$NAME" = "Arch Linux" ]; then
         sudo pacman -S --needed --noconfirm --disable-download-timeout - < arch/common
-        sudo systemctl enable systemd-resolved cups.socket power-profiles-daemon sshd
+        sudo systemctl enable avahi-daemon.socket cups.socket power-profiles-daemon sshd systemd-resolved
     elif [ "$NAME" = "Fedora Linux" ]; then
         sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
         sudo tee /etc/yum.repos.d/vscode.repo > /dev/null <<EOF
@@ -340,8 +340,6 @@ configure_post_de() {
     if eval "$check_gtk4_cmd" &>/dev/null; then
         echo "GSK_RENDERER=gl" | sudo tee -a /etc/environment > /dev/null
     fi
-
-    sudo systemctl mask avahi-daemon.service avahi-daemon.socket
 
     sudo tee /etc/nanorc > /dev/null <<EOF
 include "/usr/share/nano/*.nanorc"
