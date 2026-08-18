@@ -83,6 +83,14 @@ install_common_packages() {
         sudo pacman -S --needed --noconfirm --disable-download-timeout - < arch/common
         sudo systemctl enable avahi-daemon.socket cups.socket power-profiles-daemon sshd systemd-resolved
     elif [ "$NAME" = "Fedora Linux" ]; then
+        sudo dnf install -y $(cat fedora/common)
+    fi
+}
+
+install_vscode() {
+    if [ "$NAME" = "Arch Linux" ]; then
+        sudo pacman -S --needed --noconfirm --disable-download-timeout code
+    elif [ "$NAME" = "Fedora Linux" ]; then
         sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
         sudo tee /etc/yum.repos.d/vscode.repo > /dev/null <<EOF
 [code]
@@ -95,7 +103,7 @@ gpgcheck=1
 gpgkey=https://packages.microsoft.com/keys/microsoft.asc
 EOF
         sudo dnf upgrade -y
-        sudo dnf install -y $(cat fedora/common)
+        sudo dnf install -y code
     fi
 }
 
@@ -422,6 +430,7 @@ case "$NAME" in
         install_nvidia_drivers
         setup_swap
         install_common_packages
+        install_vscode
         configure_system
         setup_git
         select_desktop_environment
@@ -443,6 +452,7 @@ case "$NAME" in
         install_nvidia_drivers
         setup_swap
         install_common_packages
+        install_vscode
         configure_system
         setup_git
         select_desktop_environment
