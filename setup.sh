@@ -344,6 +344,12 @@ floating=0
 EOF
 
     tee ~/.config/plasma_workspace.notifyrc > /dev/null <<EOF
+[Event/deviceAdded]
+Action=
+
+[Event/deviceRemoved]
+Action=
+
 [Event/exitkde]
 Action=
 
