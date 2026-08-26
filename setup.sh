@@ -264,32 +264,119 @@ configure_kde() {
         sudo systemctl enable plasmalogin.service
         sudo systemctl set-default graphical.target
     fi
+
     sudo mkdir -p /var/lib/plasmalogin/.config/
-    echo -e "[Keyboard]\nNumLock=0" | sudo tee /var/lib/plasmalogin/.config/kcminputrc > /dev/null
-    echo -e "[Plugins]\nshakecursorEnabled=false" | sudo tee /var/lib/plasmalogin/.config/kwinrc > /dev/null
-    echo -e "[KDE]\nLookAndFeelPackage=org.kde.breezedark.desktop" | sudo tee /var/lib/plasmalogin/.config/kdeglobals > /dev/null
+
+    sudo tee /var/lib/plasmalogin/.config/kcminputrc > /dev/null <<EOF
+[Keyboard]
+NumLock=0
+EOF
+
+    sudo tee /var/lib/plasmalogin/.config/kwinrc > /dev/null <<EOF
+[Plugins]
+shakecursorEnabled=false
+EOF
+
+    sudo tee /var/lib/plasmalogin/.config/kdeglobals > /dev/null <<EOF
+[KDE]
+LookAndFeelPackage=org.kde.breezedark.desktop
+EOF
+
     mkdir -p ~/.config/
-    echo -e "[General]\nRememberOpenedTabs=false" | tee ~/.config/dolphinrc > /dev/null
-    echo -e "[Keyboard]\nNumLock=0" | tee ~/.config/kcminputrc > /dev/null
-    echo -e "[KDE]\nLookAndFeelPackage=org.kde.breezedark.desktop" | tee ~/.config/kdeglobals > /dev/null
-    echo -e "[BusyCursorSettings]\nBouncing=false\n[FeedbackStyle]\nBusyCursor=false" | tee ~/.config/klaunchrc > /dev/null
-    echo -e "[General]\nconfirmLogout=false\nloginMode=emptySession" | tee ~/.config/ksmserverrc > /dev/null
-    echo -e "[KSplash]\nEngine=none\nTheme=None" | tee ~/.config/ksplashrc > /dev/null
-    echo -e "[Effect-overview]\nBorderActivate=9\n\n[Plugins]\nblurEnabled=false\ncontrastEnabled=true\nshakecursorEnabled=false" | tee ~/.config/kwinrc > /dev/null
-    echo -e "[General]\nShowWelcomeScreenOnStartup=false" | tee ~/.config/arkrc > /dev/null
-    echo -e "[General]\nShow welcome view for new window=false" | tee $( [ "$NAME" = "Arch Linux" ] && echo "$HOME/.config/katerc" ) ~/.config/kwriterc > /dev/null
-    echo -e "[PlasmaViews][Panel 2]\nfloating=0" | tee ~/.config/plasmashellrc > /dev/null
-    echo -e "[Event/exitkde]\nAction=\n\n[Event/startkde]\nAction=" | tee ~/.config/plasma_workspace.notifyrc > /dev/null
-    echo -e "[Plugin-org.kde.ActivityManager.Resources.Scoring]\nwhat-to-remember=2" | tee ~/.config/kactivitymanagerd-pluginsrc > /dev/null
-    local touchpad_id
-    touchpad_id=$(sudo libinput list-devices | awk -F'Device:[[:space:]]*' '/Device:/{d=$2} /Touchpad/{print d}')
-    if [ -n "$touchpad_id" ]; then
-        local vendor_id product_id vendor_id_dec product_id_dec
-        vendor_id=$(sudo libinput list-devices | awk '/Device:.*Touchpad/{f=1} f&&/Id:/{if (match($0,/[a-z]+:([0-9a-fA-F]+):[0-9a-fA-F]+/,m)) print m[1]; f=0}')
-        product_id=$(sudo libinput list-devices | awk '/Device:.*Touchpad/{f=1} f&&/Id:/{if (match($0,/[a-z]+:[0-9a-fA-F]+:([0-9a-fA-F]+)/,m)) print m[1]; f=0}')
+
+    tee ~/.config/dolphinrc > /dev/null <<EOF
+[General]
+RememberOpenedTabs=false
+EOF
+
+    tee ~/.config/kcminputrc > /dev/null <<EOF
+[Keyboard]
+NumLock=0
+EOF
+
+    tee ~/.config/kdeglobals > /dev/null <<EOF
+[KDE]
+LookAndFeelPackage=org.kde.breezedark.desktop
+EOF
+
+    tee ~/.config/klaunchrc > /dev/null <<EOF
+[BusyCursorSettings]
+Bouncing=false
+[FeedbackStyle]
+BusyCursor=false
+EOF
+
+    tee ~/.config/ksmserverrc > /dev/null <<EOF
+[General]
+confirmLogout=false
+loginMode=emptySession
+EOF
+
+    tee ~/.config/ksplashrc > /dev/null <<EOF
+[KSplash]
+Engine=none
+Theme=None
+EOF
+
+    tee ~/.config/kwinrc > /dev/null <<EOF
+[Effect-overview]
+BorderActivate=9
+
+[Plugins]
+blurEnabled=false
+contrastEnabled=true
+shakecursorEnabled=false
+EOF
+
+    tee ~/.config/arkrc > /dev/null <<EOF
+[General]
+ShowWelcomeScreenOnStartup=false
+EOF
+
+    tee "$([ "$NAME" = "Arch Linux" ] && echo "$HOME/.config/katerc")" ~/.config/kwriterc > /dev/null <<EOF
+[General]
+Show welcome view for new window=false
+EOF
+
+    tee ~/.config/plasmashellrc > /dev/null <<EOF
+[PlasmaViews][Panel 2]
+floating=0
+EOF
+
+    tee ~/.config/plasma_workspace.notifyrc > /dev/null <<EOF
+[Event/exitkde]
+Action=
+
+[Event/startkde]
+Action=
+EOF
+
+    tee ~/.config/kactivitymanagerd-pluginsrc > /dev/null <<EOF
+[Plugin-org.kde.ActivityManager.Resources.Scoring]
+what-to-remember=2
+EOF
+
+    local touchpad_device
+    touchpad_device=$(sudo libinput list-devices | grep 'Touchpad' | sed 's/^Device:[[:space:]]*//')
+
+    if [ -n "$touchpad_device" ]; then
+        local touchpad_id vendor_id product_id vendor_id_dec product_id_dec
+
+        touchpad_device=$(sudo libinput list-devices |
+            grep -A2 'Touchpad' |
+            grep 'Id' |
+            sed 's/^Id:[[:space:]]*i2c://')
+
+        vendor_id=$(echo "$touchpad_device" | cut -d : -f 1)
+        product_id=$(echo "$touchpad_device" | cut -d : -f 2)
         vendor_id_dec=$(printf "%d" "0x$vendor_id")
         product_id_dec=$(printf "%d" "0x$product_id")
-        echo -e "\n[Libinput][$vendor_id_dec][$product_id_dec][$touchpad_id]\nNaturalScroll=true" | tee -a ~/.config/kcminputrc > /dev/null
+
+        tee -a ~/.config/kcminputrc > /dev/null <<EOF
+
+[Libinput][$vendor_id_dec][$product_id_dec][$touchpad_device]
+NaturalScroll=true
+EOF
     fi
 }
 
