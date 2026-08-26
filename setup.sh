@@ -297,6 +297,7 @@ EOF
     tee ~/.config/kdeglobals > /dev/null <<EOF
 [KDE]
 LookAndFeelPackage=org.kde.breezedark.desktop
+ShowIconsInMenuItems=false
 EOF
 
     tee ~/.config/klaunchrc > /dev/null <<EOF
