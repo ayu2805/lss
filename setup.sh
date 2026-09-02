@@ -358,6 +358,11 @@ Action=
 Action=
 EOF
 
+    tee ~/.config/plasmaparc > /dev/null <<EOF
+[General]
+AudioFeedback=false
+EOF
+
     tee ~/.config/kactivitymanagerd-pluginsrc > /dev/null <<EOF
 [Plugin-org.kde.ActivityManager.Resources.Scoring]
 what-to-remember=2
