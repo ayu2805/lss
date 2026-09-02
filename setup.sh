@@ -88,11 +88,13 @@ install_common_packages() {
 }
 
 install_vscode() {
-    if [ "$NAME" = "Arch Linux" ]; then
-        sudo pacman -S --needed --noconfirm --disable-download-timeout code
-    elif [ "$NAME" = "Fedora Linux" ]; then
-        sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-        sudo tee /etc/yum.repos.d/vscode.repo > /dev/null <<EOF
+    echo ""
+    if prompt_yes_no "Do you want to install Visual Studio Code?"; then
+        if [ "$NAME" = "Arch Linux" ]; then
+            sudo pacman -S --needed --noconfirm --disable-download-timeout code
+        elif [ "$NAME" = "Fedora Linux" ]; then
+            sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+            sudo tee /etc/yum.repos.d/vscode.repo > /dev/null <<EOF
 [code]
 name=Visual Studio Code
 baseurl=https://packages.microsoft.com/yumrepos/vscode
@@ -102,9 +104,64 @@ type=rpm-md
 gpgcheck=1
 gpgkey=https://packages.microsoft.com/keys/microsoft.asc
 EOF
-        sudo dnf upgrade -y
-        sudo dnf install -y code
+            sudo dnf upgrade -y
+            sudo dnf install -y code
+        fi
     fi
+}
+
+install_browser() {
+    echo ""
+    while true; do
+        if [ "$NAME" = "Fedora Linux" ]; then
+            echo -e "1) Firefox\n2) Chromium\n3) Google Chrome"
+        else
+            echo -e "1) Firefox\n2) Chromium"
+        fi
+        read -r -p "Select a browser (or press enter to skip): " choice
+
+        case "$choice" in
+            "1"|"Firefox"|"firefox")
+                if [ "$NAME" = "Arch Linux" ]; then
+                    sudo pacman -S --needed --noconfirm --disable-download-timeout firefox firefox-ublock-origin
+                elif [ "$NAME" = "Fedora Linux" ]; then
+                    sudo dnf install -y firefox mozilla-ublock-origin
+                fi
+                break
+                ;;
+            "2"|"Chromium"|"chromium")
+                if [ "$NAME" = "Arch Linux" ]; then
+                    sudo pacman -S --needed --noconfirm --disable-download-timeout chromium
+                elif [ "$NAME" = "Fedora Linux" ]; then
+                    sudo dnf install -y chromium
+                fi
+                break
+                ;;
+            "3"|"Google Chrome"|"google-chrome")
+                if [ "$NAME" = "Fedora Linux" ]; then
+                    sudo tee /etc/yum.repos.d/google-chrome.repo > /dev/null <<EOF
+[google-chrome]
+name=google-chrome
+baseurl=http://dl.google.com/linux/chrome/rpm/stable/x86_64
+enabled=1
+gpgcheck=1
+gpgkey=https://dl.google.com/linux/linux_signing_key.pub
+EOF
+                    sudo dnf upgrade -y
+                    sudo dnf install -y google-chrome
+                    break
+                else
+                    echo -e "\nInvalid choice. Please try again..."
+                fi
+                ;;
+            "")
+                break
+                ;;
+            *)
+                echo -e "\nInvalid choice. Please try again..."
+                ;;
+        esac
+    done
 }
 
 configure_system() {
@@ -401,6 +458,7 @@ configure_hyprland() {
 }
 
 select_desktop_environment() {
+    echo ""
     while true; do
         if [ "$NAME" = "Arch Linux" ]; then
             echo -e "1) Gnome\n2) KDE\n3) Hyprland"
@@ -409,15 +467,15 @@ select_desktop_environment() {
         fi
         read -r -p "Select Desktop Environment(or press enter to skip): " reply
         case "$reply" in
-            "1")
+            "1"|"Gnome"|"gnome")
                 configure_gnome
                 break
                 ;;
-            "2")
+            "2"|"KDE"|"kde")
                 configure_kde
                 break
                 ;;
-            "3")
+            "3"|"Hyprland"|"hyprland")
                 if [ "$NAME" = "Arch Linux" ]; then
                     configure_hyprland
                     break
@@ -530,6 +588,7 @@ case "$NAME" in
         setup_swap
         install_common_packages
         install_vscode
+        install_browser
         configure_system
         setup_git
         select_desktop_environment
@@ -552,6 +611,7 @@ case "$NAME" in
         setup_swap
         install_common_packages
         install_vscode
+        install_browser
         configure_system
         setup_git
         select_desktop_environment

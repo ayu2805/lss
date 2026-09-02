@@ -5,7 +5,6 @@ clang-devel
 dosfstools
 exfatprogs
 ffmpeg
-firefox
 firewall-config
 foomatic
 fprintd
@@ -22,7 +21,6 @@ gutenprint
 liberation-fonts-all
 llvm
 mesa-vulkan-drivers
-mozilla-ublock-origin
 NetworkManager-wifi
 pipewire
 pipewire-alsa
