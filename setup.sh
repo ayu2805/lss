@@ -137,18 +137,18 @@ install_browser() {
                 fi
                 break
                 ;;
-            "3"|"Google Chrome"|"google-chrome")
+            "3"|"Google Chrome"|"google-chrome"|"google chrome"|"Chrome"|"chrome")
                 if [ "$NAME" = "Fedora Linux" ]; then
                     sudo tee /etc/yum.repos.d/google-chrome.repo > /dev/null <<EOF
 [google-chrome]
 name=google-chrome
-baseurl=http://dl.google.com/linux/chrome/rpm/stable/x86_64
+baseurl=https://dl.google.com/linux/chrome/rpm/stable/x86_64
 enabled=1
 gpgcheck=1
 gpgkey=https://dl.google.com/linux/linux_signing_key.pub
 EOF
                     sudo dnf upgrade -y
-                    sudo dnf install -y google-chrome
+                    sudo dnf install -y google-chrome-stable
                     break
                 else
                     echo -e "\nInvalid choice. Please try again..."
@@ -391,10 +391,17 @@ EOF
 ShowWelcomeScreenOnStartup=false
 EOF
 
-    tee "$([ "$NAME" = "Arch Linux" ] && echo "$HOME/.config/katerc")" ~/.config/kwriterc > /dev/null <<EOF
+    if [ "$NAME" = "Arch Linux" ]; then
+        tee ~/.config/katerc ~/.config/kwriterc > /dev/null <<EOF
 [General]
 Show welcome view for new window=false
 EOF
+    else
+        tee ~/.config/kwriterc > /dev/null <<EOF
+[General]
+Show welcome view for new window=false
+EOF
+    fi
 
     tee ~/.config/plasmashellrc > /dev/null <<EOF
 [PlasmaViews][Panel 2]
