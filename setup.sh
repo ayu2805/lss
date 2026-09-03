@@ -123,9 +123,19 @@ install_browser() {
         case "$choice" in
             "1"|"Firefox"|"firefox")
                 if [ "$NAME" = "Arch Linux" ]; then
-                    sudo pacman -S --needed --noconfirm --disable-download-timeout firefox firefox-ublock-origin
+                    sudo pacman -S --needed --noconfirm --disable-download-timeout firefox
                 elif [ "$NAME" = "Fedora Linux" ]; then
-                    sudo dnf install -y firefox mozilla-ublock-origin
+                    sudo tee /etc/yum.repos.d/firefox.repo > /dev/null << EOF
+[firefox]
+name=Firefox Packages
+baseurl=https://packages.mozilla.org/rpm/firefox
+enabled=1
+gpgcheck=1
+gpgkey=https://packages.mozilla.org/rpm/firefox/signing-key.gpg
+priority=0
+EOF
+                    sudo dnf upgrade -y
+                    sudo dnf install -y firefox
                 fi
                 break
                 ;;
