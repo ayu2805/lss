@@ -220,10 +220,14 @@ setup_git() {
         git config --global user.name "$git_name"
         git config --global user.email "$git_email"
         git config --global init.defaultBranch main
-        ssh-keygen -t ed25519 -C "$git_email"
-        git config --global gpg.format ssh
-        git config --global user.signingkey "/home/$(whoami)/.ssh/id_ed25519.pub"
-        git config --global commit.gpgsign true
+        
+        echo ""
+        if prompt_yes_no "Do you want to generate a new SSH key?"; then
+            ssh-keygen -t ed25519 -C "$git_email"
+            git config --global gpg.format ssh
+            git config --global user.signingkey "/home/$(whoami)/.ssh/id_ed25519.pub"
+            git config --global commit.gpgsign true
+        fi
     fi
 }
 
