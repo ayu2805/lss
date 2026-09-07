@@ -11,7 +11,7 @@ kinfocenter
 kio-admin
 konsole
 kscreen
-kwallet-pam
+pam-kwallet
 kwrite
 lm_sensors
 mpv
