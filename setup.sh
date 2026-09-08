@@ -446,6 +446,12 @@ EOF
 what-to-remember=2
 EOF
 
+    tee ~/.config/spectaclerc > /dev/null <<EOF
+[GuiConfig]
+quitAfterSaveCopyExport=true
+EOF
+
+
     local touchpad_device
     touchpad_device=$(sudo libinput list-devices | grep 'Touchpad' | sed 's/^Device:[[:space:]]*//')
 
