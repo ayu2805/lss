@@ -93,18 +93,6 @@ install_vscode() {
         if [ "$NAME" = "Arch Linux" ]; then
             sudo pacman -S --needed --noconfirm --disable-download-timeout code
         elif [ "$NAME" = "Fedora Linux" ]; then
-            sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-            sudo tee /etc/yum.repos.d/vscode.repo > /dev/null <<EOF
-[code]
-name=Visual Studio Code
-baseurl=https://packages.microsoft.com/yumrepos/vscode
-enabled=1
-autorefresh=1
-type=rpm-md
-gpgcheck=1
-gpgkey=https://packages.microsoft.com/keys/microsoft.asc
-EOF
-            sudo dnf upgrade -y
             sudo dnf install -y code
         fi
     fi
@@ -125,16 +113,6 @@ install_browser() {
                 if [ "$NAME" = "Arch Linux" ]; then
                     sudo pacman -S --needed --noconfirm --disable-download-timeout firefox
                 elif [ "$NAME" = "Fedora Linux" ]; then
-                    sudo tee /etc/yum.repos.d/firefox.repo > /dev/null << EOF
-[firefox]
-name=Firefox Packages
-baseurl=https://packages.mozilla.org/rpm/firefox
-enabled=1
-gpgcheck=1
-gpgkey=https://packages.mozilla.org/rpm/firefox/signing-key.gpg
-priority=0
-EOF
-                    sudo dnf upgrade -y
                     sudo dnf install -y firefox
                 fi
                 break
@@ -149,15 +127,6 @@ EOF
                 ;;
             "3"|"Google Chrome"|"google-chrome"|"google chrome"|"Chrome"|"chrome")
                 if [ "$NAME" = "Fedora Linux" ]; then
-                    sudo tee /etc/yum.repos.d/google-chrome.repo > /dev/null <<EOF
-[google-chrome]
-name=google-chrome
-baseurl=https://dl.google.com/linux/chrome/rpm/stable/x86_64
-enabled=1
-gpgcheck=1
-gpgkey=https://dl.google.com/linux/linux_signing_key.pub
-EOF
-                    sudo dnf upgrade -y
                     sudo dnf install -y google-chrome-stable
                     break
                 else
@@ -629,6 +598,33 @@ case "$NAME" in
         setup_dnf() {
             sudo dnf install -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
             echo -e "[main]\ninstall_weak_deps = false\ndefaultyes = true" | sudo tee /etc/dnf/dnf.conf > /dev/null
+            sudo tee /etc/yum.repos.d/firefox.repo > /dev/null << EOF
+[firefox]
+name=Firefox Packages
+baseurl=https://packages.mozilla.org/rpm/firefox
+enabled=1
+gpgcheck=1
+gpgkey=https://packages.mozilla.org/rpm/firefox/signing-key.gpg
+priority=0
+EOF
+            sudo tee /etc/yum.repos.d/google-chrome.repo > /dev/null <<EOF
+[google-chrome]
+name=Google Chrome
+baseurl=https://dl.google.com/linux/chrome/rpm/stable/x86_64
+enabled=1
+gpgcheck=1
+gpgkey=https://dl.google.com/linux/linux_signing_key.pub
+EOF
+            sudo tee /etc/yum.repos.d/vscode.repo > /dev/null <<EOF
+[code]
+name=Visual Studio Code
+baseurl=https://packages.microsoft.com/yumrepos/vscode
+enabled=1
+autorefresh=1
+type=rpm-md
+gpgcheck=1
+gpgkey=https://packages.microsoft.com/keys/microsoft.asc
+EOF
             sudo dnf upgrade -y
         }
         check_root
