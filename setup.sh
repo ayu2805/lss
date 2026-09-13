@@ -174,6 +174,9 @@ EOF
         systemctl --user enable --now pipewire.socket pipewire-pulse.socket wireplumber.service
     fi
 
+    sudo tee /etc/mpv/mpv.conf > /dev/null <<EOF
+autofit-larger=75%x75%
+EOF
     echo 'PS1="\[\e[32m\][\u@\h \W]\[\e[34m\]$\[\e[0m\] "' | sudo tee "$shell_rc" > /dev/null
     echo -e "PAGER=more" | sudo tee /etc/environment > /dev/null
     mkdir -p "/home/$(whoami)/.config/$vscode_config_dir/User/"
