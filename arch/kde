@@ -1,6 +1,5 @@
 ark
 bluedevil
-bluez-obex
 breeze-gtk
 dolphin-plugins
 gwenview
@@ -11,7 +10,6 @@ kinfocenter
 kio-admin
 konsole
 kscreen
-kwallet-pam
 mpv
 partitionmanager
 plasma-desktop
