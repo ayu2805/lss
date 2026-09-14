@@ -10,6 +10,8 @@ fprintd
 fwupd
 git
 google-noto-fonts-all
+google-noto-sans-cjk-fonts
+google-noto-serif-cjk-fonts
 gstreamer1-plugin-libav
 gstreamer1-plugins-bad-free
 gstreamer1-plugins-base
