@@ -1,7 +1,6 @@
 alsa-utils
 android-tools
 aria2
-clang-devel
 dosfstools
 exfatprogs
 ffmpeg
@@ -19,7 +18,6 @@ gstreamer1-plugins-ugly-free
 gutenprint
 @hardware-support
 liberation-fonts-all
-llvm
 mesa-vulkan-drivers
 NetworkManager-wifi
 pipewire

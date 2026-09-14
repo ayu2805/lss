@@ -1,7 +1,6 @@
 alsa-utils
 android-tools
 aria2
-clang
 devtools
 dosfstools
 exfatprogs
@@ -19,7 +18,6 @@ gst-plugins-base
 gst-plugins-good
 gst-plugins-ugly
 gutenprint
-llvm
 nano
 noto-fonts
 power-profiles-daemon
