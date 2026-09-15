@@ -81,10 +81,18 @@ install_common_packages() {
     echo ""
     if [ "$NAME" = "Arch Linux" ]; then
         sudo pacman -S --needed --noconfirm --disable-download-timeout - < arch/common
+        sudo grep -q "mdns_minimal \[NOTFOUND=return\]" /etc/nsswitch.conf || sudo sed -i '/^hosts:/s/resolve/mdns_minimal [NOTFOUND=return] resolve/' /etc/nsswitch.conf
         sudo systemctl enable avahi-daemon.socket cups.socket power-profiles-daemon sshd systemd-resolved
     elif [ "$NAME" = "Fedora Linux" ]; then
         sudo dnf install -y $(cat fedora/common)
     fi
+
+    sudo tee /etc/systemd/resolved.conf.d/disable_mdns.conf <<EOF
+[Resolve]
+MulticastDNS=no
+EOF
+
+    sudo systemctl restart systemd-resolved
 }
 
 install_vscode() {

@@ -19,6 +19,7 @@ gst-plugins-good
 gst-plugins-ugly
 nano
 noto-fonts
+nss-mdns
 power-profiles-daemon
 python-mutagen
 python-dbus
