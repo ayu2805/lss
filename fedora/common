@@ -26,6 +26,7 @@ pipewire-alsa
 pipewire-pulseaudio
 power-profiles-daemon
 rpmdevtools
+samba-client
 unrar
 unzip
 upower
