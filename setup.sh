@@ -189,6 +189,28 @@ EOF
     echo -e "PAGER=more" | sudo tee /etc/environment > /dev/null
     mkdir -p "/home/$(whoami)/.config/$vscode_config_dir/User/"
     curl -Ss https://gist.githubusercontent.com/ayu2805/7bae58a7e279199552f77e3ae577bd6c/raw/settings.json | tee "/home/$(whoami)/.config/$vscode_config_dir/User/settings.json" > /dev/null
+
+    echo ""
+    if prompt_yes_no "Do you want to setup Samba?"; then
+        if [ "$NAME" = "Arch Linux" ]; then
+            sudo pacman -S --needed --noconfirm --disable-download-timeout samba
+        elif [ "$NAME" = "Fedora Linux" ]; then
+            sudo dnf install -y samba
+            sudo setsebool -P samba_enable_home_dirs on
+        fi
+
+        sudo tee /etc/samba/smb.conf > /dev/null <<EOF
+[global]
+    server string = Samba Server
+
+[homes]
+    browseable = no
+    read only = no
+EOF
+        sudo smbpasswd -a "$(whoami)"
+        sudo firewall-cmd --permanent --add-service={samba,samba-client,samba-dc}
+        sudo systemctl enable smb
+    fi
 }
 
 setup_git() {
