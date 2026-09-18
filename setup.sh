@@ -87,12 +87,13 @@ install_common_packages() {
         sudo dnf install -y $(cat fedora/common)
     fi
 
-    sudo tee /etc/systemd/resolved.conf.d/disable_mdns.conf <<EOF
-[Resolve]
-MulticastDNS=no
-EOF
+    sudo systemctl mask systemd-resolved
+    sudo systemctl stop systemd-resolved
+    sudo rm /etc/resolv.conf
+    sudo systemctl restart NetworkManager
 
-    sudo systemctl restart systemd-resolved
+    echo "Waiting for 5 seconds to ensure NetworkManager has restarted properly..."
+    sleep 5
 }
 
 install_vscode() {
