@@ -304,7 +304,11 @@ configure_gnome() {
     gsettings set org.gnome.TextEditor wrap-text false
     gsettings set org.gtk.gtk4.Settings.FileChooser sort-directories-first true
     gsettings set org.gtk.Settings.FileChooser sort-directories-first true
-    echo -e "user-db:user\nsystem-db:gdm\nfile-db:/usr/share/gdm/greeter-dconf-defaults" | sudo tee /etc/dconf/profile/gdm > /dev/null
+    sudo tee /etc/dconf/profile/gdm > /dev/null <<EOF
+user-db:user
+system-db:gdm
+file-db:/usr/share/gdm/greeter-dconf-defaults
+EOF
     sudo mkdir -p /etc/dconf/db/gdm.d/
     sudo tee /etc/dconf/db/gdm.d/gdm-config > /dev/null <<EOF
 [org/gnome/desktop/interface]
