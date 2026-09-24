@@ -638,7 +638,7 @@ case "$NAME" in
             echo -e "[main]\ninstall_weak_deps = false\ndefaultyes = true" | sudo tee /etc/dnf/dnf.conf > /dev/null
             sudo tee /etc/yum.repos.d/firefox.repo > /dev/null << EOF
 [firefox]
-name=Firefox Packages
+name=Mozilla Firefox
 baseurl=https://packages.mozilla.org/rpm/firefox
 enabled=1
 gpgcheck=1
