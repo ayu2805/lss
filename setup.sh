@@ -183,6 +183,7 @@ EOF
         systemctl --user enable --now pipewire.socket pipewire-pulse.socket wireplumber.service
     fi
 
+    sudo mkdir -p /etc/mpv/
     sudo tee /etc/mpv/mpv.conf > /dev/null <<EOF
 autofit-larger=75%x75%
 EOF
