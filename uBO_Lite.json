@@ -1,0 +1,22 @@
+{
+  "rulesets": [
+    "+adguard-mobile",
+    "+block-lan",
+    "+adguard-spyware-url",
+    "+annoyances-ai",
+    "+annoyances-cookies",
+    "+annoyances-overlays",
+    "+annoyances-social",
+    "+annoyances-widgets",
+    "+annoyances-others",
+    "+annoyances-notifications"
+  ],
+  "filteringModes": {
+    "none": [],
+    "basic": [],
+    "optimal": [],
+    "complete": [
+      "all-urls"
+    ]
+  }
+}
