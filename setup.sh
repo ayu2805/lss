@@ -460,13 +460,13 @@ EOF
     if [ -n "$touchpad_device" ]; then
         local touchpad_id vendor_id product_id vendor_id_dec product_id_dec
 
-        touchpad_device=$(sudo libinput list-devices |
+        touchpad_id=$(sudo libinput list-devices |
             grep -A2 'Touchpad' |
             grep 'Id' |
             sed 's/^Id:[[:space:]]*i2c://')
 
-        vendor_id=$(echo "$touchpad_device" | cut -d : -f 1)
-        product_id=$(echo "$touchpad_device" | cut -d : -f 2)
+        vendor_id=$(echo "$touchpad_id" | cut -d : -f 1)
+        product_id=$(echo "$touchpad_id" | cut -d : -f 2)
         vendor_id_dec=$(printf "%d" "0x$vendor_id")
         product_id_dec=$(printf "%d" "0x$product_id")
 
