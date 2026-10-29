@@ -658,6 +658,15 @@ type=rpm-md
 gpgcheck=1
 gpgkey=https://packages.microsoft.com/keys/microsoft.asc
 EOF
+            sudo tee /etc/yum.repos.d/onlyoffice.repo > /dev/null <<EOF
+[onlyoffice]
+name=ONLYOFFICE
+baseurl=http://download.onlyoffice.com/repo/centos/main/noarch/
+gpgcheck=1
+enabled=1
+gpgkey=https://download.onlyoffice.com/GPG-KEY-ONLYOFFICE
+EOF
+
             sudo dnf upgrade -y
         }
         check_root
