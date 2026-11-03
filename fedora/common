@@ -19,6 +19,7 @@ gstreamer1-plugins-ugly-free
 @hardware-support
 liberation-fonts-all
 mesa-vulkan-drivers
+NetworkManager-bluetooth
 NetworkManager-wifi
 pipewire
 pipewire-alsa
