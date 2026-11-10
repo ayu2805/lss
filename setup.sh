@@ -666,6 +666,14 @@ gpgcheck=1
 enabled=1
 gpgkey=https://download.onlyoffice.com/GPG-KEY-ONLYOFFICE
 EOF
+            sudo tee /etc/yum.repos.d/mkvtoolnix.repo  > /dev/null <<'EOF'
+[mkvtoolnix]
+name=MKVToolNix
+baseurl=https://mkvtoolnix.download/fedora/$releasever/$basearch/
+enabled=1
+gpgcheck=1
+gpgkey=https://www.bunkus.org/gpg-pub-bunkusorg-rpm-signing.txt
+EOF
 
             sudo dnf upgrade -y
         }
